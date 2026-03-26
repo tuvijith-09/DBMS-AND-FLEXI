@@ -13,7 +13,7 @@ public class DBConnection {
         return DriverManager.getConnection(
             "jdbc:mysql://localhost:3306/multi_tenant_inventory",
             "root",
-            "rajeev0146"
+            "password"
         );
     }
 }
