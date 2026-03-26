@@ -1,28 +1,27 @@
 package ui;
 
-import java.awt.*;
-import java.sql.ResultSet;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import model.Customer;
-import service.CustomerService;
+import java.awt.*;
+import java.sql.ResultSet;
+import model.Supplier;
+import service.SupplierService;
 import util.UserSession;
 
-public class CustomerUI {
+public class SupplierUI {
 
     public static void main(String[] args) {
-        // Security Check: Ensure they are logged in
         if (UserSession.loggedInShopId == 0) {
             JOptionPane.showMessageDialog(null, "Security Alert: Please login first!");
             return;
         }
 
-        JFrame frame = new JFrame("Warehouse " + UserSession.loggedInShopId + " - Customer Management");
+        JFrame frame = new JFrame("Warehouse " + UserSession.loggedInShopId + " - Supplier Management");
         frame.setSize(850, 500);
         frame.setLayout(new BorderLayout(10, 10)); 
         frame.setLocationRelativeTo(null); 
 
-        // Top Panel (Inputs) - Notice there is no Shop ID field anymore!
+        // Top Panel (Inputs)
         JPanel inputPanel = new JPanel(new GridLayout(3, 4, 10, 10));
         inputPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
@@ -31,43 +30,42 @@ public class CustomerUI {
         JTextField emailField = new JTextField();
         JTextField phoneField = new JTextField();
         JTextField cityField = new JTextField();
-        JTextField statusField = new JTextField("Active");
+        JTextField companyField = new JTextField();
 
-        inputPanel.add(new JLabel("First Name:")); inputPanel.add(fNameField);
-        inputPanel.add(new JLabel("Last Name:"));  inputPanel.add(lNameField);
-        inputPanel.add(new JLabel("Email:"));      inputPanel.add(emailField);
-        inputPanel.add(new JLabel("Phone No:"));   inputPanel.add(phoneField);
-        inputPanel.add(new JLabel("City:"));       inputPanel.add(cityField);
-        inputPanel.add(new JLabel("Status:"));     inputPanel.add(statusField);
+        inputPanel.add(new JLabel("First Name:"));    inputPanel.add(fNameField);
+        inputPanel.add(new JLabel("Last Name:"));     inputPanel.add(lNameField);
+        inputPanel.add(new JLabel("Email:"));         inputPanel.add(emailField);
+        inputPanel.add(new JLabel("Phone No:"));      inputPanel.add(phoneField);
+        inputPanel.add(new JLabel("City:"));          inputPanel.add(cityField);
+        inputPanel.add(new JLabel("Company Name:"));  inputPanel.add(companyField);
 
         // Center Panel (Table)
-        String[] cols = {"Customer ID", "First Name", "Last Name", "Warehouse Name", "Status"};
+        String[] cols = {"Supplier ID", "First Name", "Last Name", "Company", "City"};
         DefaultTableModel model = new DefaultTableModel(cols, 0);
         JTable table = new JTable(model);
         JScrollPane scrollPane = new JScrollPane(table);
 
         // Bottom Panel (Buttons)
         JPanel btnPanel = new JPanel();
-        JButton addBtn = new JButton("Add Customer");
+        JButton addBtn = new JButton("Add Supplier");
         JButton refreshBtn = new JButton("Refresh Table");
         btnPanel.add(addBtn);
         btnPanel.add(refreshBtn);
 
-        CustomerService service = new CustomerService();
+        SupplierService service = new SupplierService();
 
-        // Refresh Action (Securely loads only this warehouse's customers)
+        // Refresh Action
         refreshBtn.addActionListener(e -> {
             try {
                 model.setRowCount(0); 
-                // Pass the secure Session ID to the database query
-                ResultSet rs = service.getAllCustomers(UserSession.loggedInShopId); 
+                ResultSet rs = service.getAllSuppliers(UserSession.loggedInShopId); 
                 while (rs.next()) {
                     model.addRow(new Object[]{
-                            rs.getInt("CustomerID"),
+                            rs.getInt("SupplierID"),
                             rs.getString("FirstName"),
                             rs.getString("LastName"),
-                            rs.getString("ShopName"),
-                            rs.getString("Status")
+                            rs.getString("CompanyName"),
+                            rs.getString("City")
                     });
                 }
             } catch (Exception ex) {
@@ -75,24 +73,23 @@ public class CustomerUI {
             }
         });
 
-        // Add Action (Securely injects the Session ID)
+        // Add Action
         addBtn.addActionListener(e -> {
             String fName = fNameField.getText();
             String lName = lNameField.getText();
             String email = emailField.getText();
             String phone = phoneField.getText();
             String city = cityField.getText();
-            String status = statusField.getText();
+            String company = companyField.getText();
             
-            // Auto-inject the logged-in user's Shop ID!
             int currentShopId = UserSession.loggedInShopId;
 
-            Customer c = new Customer(0, fName, lName, email, phone, city, 0, currentShopId, status);
+            Supplier s = new Supplier(0, fName, lName, email, phone, city, 0, currentShopId, company);
             
-            if (service.add(c)) {
-                JOptionPane.showMessageDialog(frame, "Customer Added Successfully to Warehouse " + currentShopId + "!");
+            if (service.add(s)) {
+                JOptionPane.showMessageDialog(frame, "Supplier Added Successfully!");
                 fNameField.setText(""); lNameField.setText(""); emailField.setText(""); 
-                phoneField.setText(""); cityField.setText(""); 
+                phoneField.setText(""); cityField.setText(""); companyField.setText("");
                 refreshBtn.doClick(); 
             } else {
                 JOptionPane.showMessageDialog(frame, "Database Error!", "Error", JOptionPane.ERROR_MESSAGE);

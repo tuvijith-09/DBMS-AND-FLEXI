@@ -1,27 +1,26 @@
 package service;
 
-import model.Customer;
+import model.Supplier;
 import db.DBConnection;
 import java.sql.*;
 
-public class CustomerService implements CRUDOperations<Customer> {
+public class SupplierService implements CRUDOperations<Supplier> {
 
     @Override
-    public boolean add(Customer c) {
+    public boolean add(Supplier s) {
         Connection con = null;
         try {
             con = DBConnection.getConnection();
-            // Start Transaction: Protects the database if one insert fails
-            con.setAutoCommit(false); 
+            con.setAutoCommit(false); // Start transaction
 
             // 1. Insert into Person Table
             String personSql = "INSERT INTO Person (FirstName, LastName, Email, PhoneNo, City) VALUES (?, ?, ?, ?, ?)";
             PreparedStatement ps1 = con.prepareStatement(personSql, Statement.RETURN_GENERATED_KEYS);
-            ps1.setString(1, c.getFirstName());
-            ps1.setString(2, c.getLastName());
-            ps1.setString(3, c.getEmail());
-            ps1.setString(4, c.getPhoneNo());
-            ps1.setString(5, c.getCity());
+            ps1.setString(1, s.getFirstName());
+            ps1.setString(2, s.getLastName());
+            ps1.setString(3, s.getEmail());
+            ps1.setString(4, s.getPhoneNo());
+            ps1.setString(5, s.getCity());
             ps1.executeUpdate();
 
             // Extract the auto-generated PersonID
@@ -31,15 +30,15 @@ public class CustomerService implements CRUDOperations<Customer> {
                 newPersonId = rsKeys.getInt(1);
             }
 
-            // 2. Insert into Customer Table
-            String customerSql = "INSERT INTO Customer (PersonID, ShopID, Status) VALUES (?, ?, ?)";
-            PreparedStatement ps2 = con.prepareStatement(customerSql);
+            // 2. Insert into Supplier Table
+            String supplierSql = "INSERT INTO Supplier (PersonID, ShopID, CompanyName) VALUES (?, ?, ?)";
+            PreparedStatement ps2 = con.prepareStatement(supplierSql);
             ps2.setInt(1, newPersonId);
-            ps2.setInt(2, c.getShopId()); // This now comes securely from the Session!
-            ps2.setString(3, c.getStatus());
+            ps2.setInt(2, s.getShopId()); // Securely injected from Session
+            ps2.setString(3, s.getCompanyName());
             ps2.executeUpdate();
 
-            con.commit(); // Save everything permanently
+            con.commit(); // Save permanently
             return true;
 
         } catch (Exception e) {
@@ -57,15 +56,14 @@ public class CustomerService implements CRUDOperations<Customer> {
     @Override
     public void viewAll() {}
 
-    // 🔥 UPGRADED: Now filters by the Warehouse (Shop) ID
-    public ResultSet getAllCustomers(int shopId) throws Exception {
+    // Securely load only this warehouse's suppliers
+    public ResultSet getAllSuppliers(int shopId) throws Exception {
         Connection con = DBConnection.getConnection();
         
-        String query = "SELECT c.CustomerID, p.FirstName, p.LastName, s.ShopName, c.Status " +
-                       "FROM Customer c " +
-                       "JOIN Person p ON c.PersonID = p.PersonID " +
-                       "JOIN Shop s ON c.ShopID = s.ShopID " +
-                       "WHERE c.ShopID = ?"; // Strict Multi-Tenant Isolation
+        String query = "SELECT s.SupplierID, p.FirstName, p.LastName, s.CompanyName, p.City " +
+                       "FROM Supplier s " +
+                       "JOIN Person p ON s.PersonID = p.PersonID " +
+                       "WHERE s.ShopID = ?";
                        
         PreparedStatement ps = con.prepareStatement(query);
         ps.setInt(1, shopId);

@@ -8,6 +8,7 @@ public class Person {
     protected String phoneNo;
     protected String city;
 
+    // Constructor to build the object
     public Person(int personId, String firstName, String lastName,
                   String email, String phoneNo, String city) {
         this.personId = personId;
@@ -17,4 +18,12 @@ public class Person {
         this.phoneNo = phoneNo;
         this.city = city;
     }
+
+    // --- GETTERS (This fixes the compile errors!) ---
+    public int getPersonId() { return personId; }
+    public String getFirstName() { return firstName; }
+    public String getLastName() { return lastName; }
+    public String getEmail() { return email; }
+    public String getPhoneNo() { return phoneNo; }
+    public String getCity() { return city; }
 }

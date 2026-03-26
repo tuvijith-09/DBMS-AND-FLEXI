@@ -1,7 +1,8 @@
 package service;
 
 public interface CRUDOperations<T> {
-    void add(T obj);
+    // Returns true if successful, false if there is a database error
+    boolean add(T obj); 
     void delete(int id);
     void viewAll();
 }
