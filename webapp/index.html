@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IMS | Signup / Login</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <script src="api.js"></script>
+</head>
+<body style="display:flex;justify-content:center;align-items:center;height:100vh;background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);">
+  <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme" style="position: absolute; top: 1rem; right: 1rem;">
+    <i class="fas fa-moon"></i>
+  </button>
+  <div class="card" style="max-width:450px;width:100%;box-shadow: var(--shadow-lg);">
+    <div class="text-center mb-0">
+      <i class="fas fa-building" style="font-size: 3rem; color: var(--accent); margin-bottom: 1rem;"></i>
+    </div>
+    <h1 class="text-center">IMS</h1>
+    <p class="text-muted text-center">Sign up to get started or login if you already have an account</p>
+
+    <!-- Tab buttons -->
+    <div class="tab-buttons" style="display:flex;margin-bottom:1rem;">
+      <button id="loginTab" class="btn btn-primary" style="flex:1;margin-right:0.5rem;">Login</button>
+      <button id="signupTab" class="btn btn-secondary" style="flex:1;">Sign Up</button>
+    </div>
+
+    <!-- Login Form -->
+    <form id="loginForm" style="display:none;">
+      <div class="form-group">
+        <label><i class="fas fa-building"></i> Shop ID</label>
+        <input type="number" id="loginShopId" placeholder="1" required min="1" />
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-user"></i> Username or Email</label>
+        <input type="text" id="loginUsername" placeholder="admin or admin@mail.com" required />
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-lock"></i> Password</label>
+        <input type="password" id="loginPassword" placeholder="••••••••" required />
+      </div>
+      <p class="text-center" style="margin-bottom:1rem; color:#6c757d;">Already signed up? Click Login</p>
+      <button type="submit" class="btn btn-primary" style="width:100%;font-size:1.1rem;">
+        <i class="fas fa-sign-in-alt"></i> Sign In
+      </button>
+    </form>
+
+    <!-- Signup Form -->
+    <form id="signupForm" style="display:block;">
+      <div class="form-group">
+        <label><i class="fas fa-user"></i> First Name</label>
+        <input type="text" id="firstName" placeholder="John" required />
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-user"></i> Last Name</label>
+        <input type="text" id="lastName" placeholder="Doe" required />
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-envelope"></i> Email</label>
+        <input type="email" id="email" placeholder="john@example.com" required />
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-phone"></i> Phone</label>
+        <input type="tel" id="phone" placeholder="+1234567890" required />
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-city"></i> City</label>
+        <input type="text" id="city" placeholder="New York" required />
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-building"></i> Shop ID</label>
+        <input type="number" id="signupShopId" placeholder="1" required min="1" />
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-user"></i> Username</label>
+        <input type="text" id="signupUsername" placeholder="johndoe" required />
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-lock"></i> Password</label>
+        <input type="password" id="signupPassword" placeholder="••••••••" required />
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;font-size:1.1rem;">
+        <i class="fas fa-user-plus"></i> Sign Up
+      </button>
+    </form>
+  </div>
+  <script>
+    // Theme toggle functionality
+    const themeToggle = document.getElementById('theme-toggle');
+    const body = document.body;
+    const themeIcon = themeToggle.querySelector('i');
+
+    // Check for saved theme preference or default to light mode
+    const currentTheme = localStorage.getItem('theme') || 'light';
+    body.setAttribute('data-theme', currentTheme);
+    updateThemeIcon(currentTheme);
+
+    themeToggle.addEventListener('click', () => {
+      const currentTheme = body.getAttribute('data-theme');
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+
+      body.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      updateThemeIcon(newTheme);
+    });
+
+    function updateThemeIcon(theme) {
+      themeIcon.className = theme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+    }
+
+    // Tab switching
+    const loginTab = document.getElementById('loginTab');
+    const signupTab = document.getElementById('signupTab');
+    const loginForm = document.getElementById('loginForm');
+    const signupForm = document.getElementById('signupForm');
+
+    loginTab.addEventListener('click', () => {
+      loginForm.style.display = 'block';
+      signupForm.style.display = 'none';
+      loginTab.className = 'btn btn-primary';
+      signupTab.className = 'btn btn-secondary';
+    });
+
+    signupTab.addEventListener('click', () => {
+      loginForm.style.display = 'none';
+      signupForm.style.display = 'block';
+      loginTab.className = 'btn btn-secondary';
+      signupTab.className = 'btn btn-primary';
+    });
+
+    // Start on signup form by default
+    loginForm.style.display = 'none';
+    signupForm.style.display = 'block';
+    loginTab.className = 'btn btn-secondary';
+    signupTab.className = 'btn btn-primary';
+
+    // Login Form Handler
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const shopId = document.getElementById('loginShopId').value;
+      const username = document.getElementById('loginUsername').value;
+      const password = document.getElementById('loginPassword').value;
+
+      try {
+        const response = await fetch('./api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: `username=${username}&password=${password}&shopId=${shopId}`
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          sessionStorage.setItem('shopId', shopId);
+          window.location.href = 'dashboard.html';
+        } else {
+          alert('Login failed: ' + result.message);
+        }
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
+    });
+
+    // Signup Form Handler
+    document.getElementById('signupForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const firstName = document.getElementById('firstName').value;
+      const lastName = document.getElementById('lastName').value;
+      const email = document.getElementById('email').value;
+      const phone = document.getElementById('phone').value;
+      const city = document.getElementById('city').value;
+      const shopId = document.getElementById('signupShopId').value;
+      const username = document.getElementById('signupUsername').value;
+      const password = document.getElementById('signupPassword').value;
+
+      try {
+        const result = await API.signup({
+          firstName, lastName, email, phone, city, shopId, username, password
+        });
+        if (result.success) {
+          alert('Signup successful! Please login.');
+          loginTab.click(); // Switch to login tab
+        } else {
+          alert('Signup failed: ' + result.message);
+        }
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
+    });
+  </script>
+</body>
+</html>

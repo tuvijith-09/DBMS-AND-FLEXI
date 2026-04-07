@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IMS | Suppliers</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+</head>
+<body>
+  <header class="navbar">
+    <div class="brand">
+      <i class="fas fa-chart-line"></i> IMS
+    </div>
+    <nav>
+      <a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+      <a href="customer.html"><i class="fas fa-users"></i> Customers</a>
+      <a href="product.html"><i class="fas fa-box"></i> Products</a>
+      <a href="invoice.html"><i class="fas fa-file-invoice"></i> Invoices</a>
+      <a href="payment.html"><i class="fas fa-credit-card"></i> Payments</a>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+        <i class="fas fa-moon"></i>
+      </button>
+      <a href="index.html" class="btn btn-outline"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </nav>
+  </header>
+  <main class="container">
+    <h1><i class="fas fa-truck"></i> Suppliers</h1>
+    <div class="card">
+      <h2><i class="fas fa-plus-circle"></i> Add / Update Supplier</h2>
+      <form id="supplierForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label><i class="fas fa-building"></i> Company</label>
+            <input type="text" id="supplierCompany" placeholder="Supplier Pvt Ltd" />
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-user-tie"></i> Contact</label>
+            <input type="text" id="supplierContact" placeholder="Arjun" />
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-envelope"></i> Email</label>
+            <input type="email" id="supplierEmail" placeholder="supplier@mail.com" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label><i class="fas fa-phone"></i> Phone</label>
+            <input type="tel" id="supplierPhone" placeholder="9876543210" />
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-city"></i> City</label>
+            <input type="text" id="supplierCity" placeholder="Chennai" />
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-tags"></i> Product Categories</label>
+            <input type="text" id="supplierCategories" placeholder="Stationery, Office" />
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Supplier</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2><i class="fas fa-list"></i> Supplier List</h2>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Company</th>
+              <th>Contact</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>City</th>
+              <th>Category</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>PQR Traders</td>
+              <td>Sunil</td>
+              <td>sunil@example.com</td>
+              <td>9876512340</td>
+              <td>Hyderabad</td>
+              <td>Electronics</td>
+              <td>
+                <button class="btn btn-outline"><i class="fas fa-edit"></i> Edit</button>
+                <button class="btn btn-danger"><i class="fas fa-trash"></i> Delete</button>
+              </td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>ABC Supplies</td>
+              <td>Priya</td>
+              <td>priya@example.com</td>
+              <td>9876587654</td>
+              <td>Bangalore</td>
+              <td>Stationery</td>
+              <td>
+                <button class="btn btn-outline"><i class="fas fa-edit"></i> Edit</button>
+                <button class="btn btn-danger"><i class="fas fa-trash"></i> Delete</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+  <script>
+    // Theme toggle functionality
+    const themeToggle = document.getElementById('theme-toggle');
+    const body = document.body;
+    const themeIcon = themeToggle.querySelector('i');
+
+    // Check for saved theme preference or default to light mode
+    const currentTheme = localStorage.getItem('theme') || 'light';
+    body.setAttribute('data-theme', currentTheme);
+    updateThemeIcon(currentTheme);
+
+    themeToggle.addEventListener('click', () => {
+      const currentTheme = body.getAttribute('data-theme');
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+
+      body.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      updateThemeIcon(newTheme);
+    });
+
+    function updateThemeIcon(theme) {
+      themeIcon.className = theme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+    }
+  </script>
+</body>
+</html>
