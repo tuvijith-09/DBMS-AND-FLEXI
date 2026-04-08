@@ -1,7 +1,7 @@
 package ui;
 
 import java.awt.*;
-import java.sql.ResultSet;
+import java.util.List;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import model.Product;
@@ -13,7 +13,7 @@ public class ProductUI {
 
     public static void main(String[] args) {
 
-        // Security Check
+        // Security Check: Ensure user is logged in
         if (UserSession.loggedInShopId == 0) {
             JOptionPane.showMessageDialog(null, "Security Alert: Please login first!");
             return;
@@ -31,13 +31,14 @@ public class ProductUI {
         inputPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
         JTextField productIdField = new JTextField(); // For update/delete
+        productIdField.setEditable(false); // Make ID read-only so users don't break updates
         JTextField catIdField     = new JTextField();
         JTextField nameField      = new JTextField();
         JTextField cpField        = new JTextField();
         JTextField spField        = new JTextField();
         JTextField qtyField       = new JTextField();
 
-        inputPanel.add(new JLabel("Product ID (for Update/Delete):")); inputPanel.add(productIdField);
+        inputPanel.add(new JLabel("Product ID (Auto/Read-Only):")); inputPanel.add(productIdField);
         inputPanel.add(new JLabel("Category ID (1 or 2):"));           inputPanel.add(catIdField);
         inputPanel.add(new JLabel("Product Name:"));                    inputPanel.add(nameField);
         inputPanel.add(new JLabel("Cost Price (CP):"));                 inputPanel.add(cpField);
@@ -77,81 +78,134 @@ public class ProductUI {
 
         ProductService service = new ProductService();
 
-        // ---- Refresh Action ----
+        // ---- Refresh Action (SECURED: No Memory Leaks) ----
         refreshBtn.addActionListener(e -> {
             try {
-                model.setRowCount(0);
-                ResultSet rs = service.getAllProducts(currentShopId);
-                while (rs.next()) {
-                    model.addRow(new Object[]{
-                        rs.getInt("ProductID"),
-                        rs.getInt("CategoryID"),
-                        rs.getString("Name"),
-                        rs.getDouble("CostPrice"),
-                        rs.getDouble("SellingPrice"),
-                        rs.getInt("Quantity")
-                    });
+                model.setRowCount(0); // Clear the table first
+                List<Object[]> rows = service.getProductTableData(currentShopId);
+                
+                for (Object[] row : rows) {
+                    model.addRow(row);
                 }
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(frame, "Table load error: " + ex.getMessage());
             }
         });
 
-        // ---- Add Action ----
+        // ---- Add Action (Fully Validated) ----
         addBtn.addActionListener(e -> {
-            try {
-                if (InputValidator.isNullOrEmpty(nameField.getText()) ||
-                    InputValidator.isNullOrEmpty(catIdField.getText())) {
-                    JOptionPane.showMessageDialog(frame, "Name and Category ID are required.");
-                    return;
-                }
-                int catId = Integer.parseInt(catIdField.getText());
-                String name = nameField.getText().trim();
-                double cp  = Double.parseDouble(cpField.getText());
-                double sp  = Double.parseDouble(spField.getText());
-                int qty    = Integer.parseInt(qtyField.getText());
+            String catIdStr = catIdField.getText();
+            String name = nameField.getText();
+            String cpStr = cpField.getText();
+            String spStr = spField.getText();
+            String qtyStr = qtyField.getText();
 
-                Product p = new Product(0, currentShopId, catId, name, cp, sp, qty);
-                if (service.add(p)) {
-                    JOptionPane.showMessageDialog(frame, "Product Added to Warehouse " + currentShopId + "!");
-                    clearFields(productIdField, catIdField, nameField, cpField, spField, qtyField);
-                    refreshBtn.doClick();
-                } else {
-                    JOptionPane.showMessageDialog(frame, "Database Error! Check Category ID.", "Error", JOptionPane.ERROR_MESSAGE);
-                }
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(frame, "Invalid input: Enter valid numbers.", "Input Error", JOptionPane.ERROR_MESSAGE);
+            // 1. Check for Empty Fields
+            if (InputValidator.isNullOrEmpty(catIdStr) || InputValidator.isNullOrEmpty(name) ||
+                InputValidator.isNullOrEmpty(cpStr) || InputValidator.isNullOrEmpty(spStr) ||
+                InputValidator.isNullOrEmpty(qtyStr)) {
+                
+                JOptionPane.showMessageDialog(frame, "All fields are required. Please fill them out.", 
+                                              "Validation Error", JOptionPane.WARNING_MESSAGE);
+                return; 
+            }
+
+            // 2. Validate Formats
+            if (!InputValidator.isPositiveInteger(catIdStr)) {
+                JOptionPane.showMessageDialog(frame, "Category ID must be a positive integer.");
+                return;
+            }
+            if (!InputValidator.isNonNegativeDouble(cpStr) || !InputValidator.isNonNegativeDouble(spStr)) {
+                JOptionPane.showMessageDialog(frame, "Prices must be valid non-negative numbers.");
+                return;
+            }
+            if (!InputValidator.isPositiveInteger(qtyStr) && !qtyStr.equals("0")) {
+                JOptionPane.showMessageDialog(frame, "Quantity must be 0 or a positive integer.");
+                return;
+            }
+
+            // 3. Safe Parsing
+            int catId = Integer.parseInt(catIdStr);
+            double cp = Double.parseDouble(cpStr);
+            double sp = Double.parseDouble(spStr);
+            int qty = Integer.parseInt(qtyStr);
+
+            // 4. Business Logic Check
+            if (!InputValidator.isSellingPriceValid(cp, sp)) {
+                JOptionPane.showMessageDialog(frame, "Selling Price (" + sp + ") cannot be lower than Cost Price (" + cp + ").", 
+                                              "Business Logic Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // 5. Database Insert
+            Product p = new Product(0, currentShopId, catId, name, cp, sp, qty);
+            if (service.add(p)) {
+                JOptionPane.showMessageDialog(frame, "Product Added to Warehouse " + currentShopId + "!");
+                clearFields(productIdField, catIdField, nameField, cpField, spField, qtyField);
+                refreshBtn.doClick();
+            } else {
+                JOptionPane.showMessageDialog(frame, "Database Error! Check Category ID.", "Error", JOptionPane.ERROR_MESSAGE);
             }
         });
 
-        // ---- Update Action ----
+        // ---- Update Action (Fully Validated) ----
         updateBtn.addActionListener(e -> {
-            try {
-                if (InputValidator.isNullOrEmpty(productIdField.getText())) {
-                    JOptionPane.showMessageDialog(frame, "Select a product from the table first (Product ID required).");
-                    return;
-                }
-                int productId = Integer.parseInt(productIdField.getText());
-                int catId     = Integer.parseInt(catIdField.getText());
-                String name   = nameField.getText().trim();
-                double cp     = Double.parseDouble(cpField.getText());
-                double sp     = Double.parseDouble(spField.getText());
-                int qty       = Integer.parseInt(qtyField.getText());
+            String idStr = productIdField.getText();
+            String catIdStr = catIdField.getText();
+            String name = nameField.getText();
+            String cpStr = cpField.getText();
+            String spStr = spField.getText();
+            String qtyStr = qtyField.getText();
 
-                Product p = new Product(productId, currentShopId, catId, name, cp, sp, qty);
-                if (service.update(p)) {
-                    JOptionPane.showMessageDialog(frame, "Product Updated Successfully!");
-                    clearFields(productIdField, catIdField, nameField, cpField, spField, qtyField);
-                    refreshBtn.doClick();
-                } else {
-                    JOptionPane.showMessageDialog(frame, "Update failed. Product may not belong to this shop.", "Error", JOptionPane.ERROR_MESSAGE);
-                }
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(frame, "Invalid input: Enter valid numbers.", "Input Error", JOptionPane.ERROR_MESSAGE);
+            // Check if a product is actually selected
+            if (InputValidator.isNullOrEmpty(idStr)) {
+                JOptionPane.showMessageDialog(frame, "Please select a product from the table first.");
+                return;
+            }
+
+            // 1. Check for Empty Fields
+            if (InputValidator.isNullOrEmpty(catIdStr) || InputValidator.isNullOrEmpty(name) ||
+                InputValidator.isNullOrEmpty(cpStr) || InputValidator.isNullOrEmpty(spStr) ||
+                InputValidator.isNullOrEmpty(qtyStr)) {
+                JOptionPane.showMessageDialog(frame, "All fields are required. Please fill them out.");
+                return; 
+            }
+
+            // 2. Validate Formats
+            if (!InputValidator.isPositiveInteger(catIdStr) || 
+                (!InputValidator.isPositiveInteger(qtyStr) && !qtyStr.equals("0")) ||
+                !InputValidator.isNonNegativeDouble(cpStr) || 
+                !InputValidator.isNonNegativeDouble(spStr)) {
+                JOptionPane.showMessageDialog(frame, "Please ensure numeric fields contain valid positive numbers.");
+                return;
+            }
+
+            // 3. Safe Parsing
+            int productId = Integer.parseInt(idStr);
+            int catId = Integer.parseInt(catIdStr);
+            double cp = Double.parseDouble(cpStr);
+            double sp = Double.parseDouble(spStr);
+            int qty = Integer.parseInt(qtyStr);
+
+            // 4. Business Logic Check
+            if (!InputValidator.isSellingPriceValid(cp, sp)) {
+                JOptionPane.showMessageDialog(frame, "Selling Price cannot be lower than Cost Price.", 
+                                              "Business Logic Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // 5. Database Update
+            Product p = new Product(productId, currentShopId, catId, name, cp, sp, qty);
+            if (service.update(p)) {
+                JOptionPane.showMessageDialog(frame, "Product Updated Successfully!");
+                clearFields(productIdField, catIdField, nameField, cpField, spField, qtyField);
+                refreshBtn.doClick();
+            } else {
+                JOptionPane.showMessageDialog(frame, "Update failed. Product may not belong to this shop.", "Error", JOptionPane.ERROR_MESSAGE);
             }
         });
 
-        // ---- Delete Action ----
+        // ---- Delete Action (Security Fixed) ----
         deleteBtn.addActionListener(e -> {
             if (InputValidator.isNullOrEmpty(productIdField.getText())) {
                 JOptionPane.showMessageDialog(frame, "Select a product from the table first.");
@@ -159,12 +213,16 @@ public class ProductUI {
             }
             int confirm = JOptionPane.showConfirmDialog(frame,
                 "Are you sure you want to delete this product?", "Confirm Delete", JOptionPane.YES_NO_OPTION);
+            
             if (confirm == JOptionPane.YES_OPTION) {
                 int productId = Integer.parseInt(productIdField.getText());
-                service.delete(productId);
+                
+                // SECURITY FIX: Passing both ProductID and the logged-in ShopID
+                service.delete(productId, currentShopId); 
+                
                 clearFields(productIdField, catIdField, nameField, cpField, spField, qtyField);
                 refreshBtn.doClick();
-                JOptionPane.showMessageDialog(frame, "Product deleted.");
+                JOptionPane.showMessageDialog(frame, "Delete action processed.");
             }
         });
 

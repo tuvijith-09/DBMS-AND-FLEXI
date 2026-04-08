@@ -31,7 +31,7 @@ public class InputValidator {
         return email.contains("@") && email.contains(".");
     }
 
-    // Validates phone number (must be 10 digits)
+    // Validates phone number (must be exactly 10 digits)
     public static boolean isValidPhone(String phone) {
         if (isNullOrEmpty(phone)) return false;
         return phone.trim().matches("\\d{10}");
@@ -42,8 +42,9 @@ public class InputValidator {
         return sellingPrice >= costPrice;
     }
 
-    // Validates minimum name length
+    // UPGRADED: Validates minimum length AND ensures only letters/spaces are used
     public static boolean isValidName(String name) {
-        return !isNullOrEmpty(name) && name.trim().length() >= 2;
+        if (isNullOrEmpty(name) || name.trim().length() < 2) return false;
+        return name.trim().matches("^[a-zA-Z\\s]+$");
     }
 }

@@ -6,6 +6,7 @@ import java.awt.*;
 import java.sql.ResultSet;
 import model.Supplier;
 import service.SupplierService;
+import util.InputValidator;
 import util.UserSession;
 
 public class SupplierUI {
@@ -73,15 +74,41 @@ public class SupplierUI {
             }
         });
 
-        // Add Action
+        // Add Action (Fully Validated)
         addBtn.addActionListener(e -> {
-            String fName = fNameField.getText();
-            String lName = lNameField.getText();
-            String email = emailField.getText();
-            String phone = phoneField.getText();
-            String city = cityField.getText();
-            String company = companyField.getText();
+            String fName = fNameField.getText().trim();
+            String lName = lNameField.getText().trim();
+            String email = emailField.getText().trim();
+            String phone = phoneField.getText().trim();
+            String city = cityField.getText().trim();
+            String company = companyField.getText().trim();
             
+            // 1. Check for empty fields
+            if (InputValidator.isNullOrEmpty(fName) || InputValidator.isNullOrEmpty(lName) ||
+                InputValidator.isNullOrEmpty(email) || InputValidator.isNullOrEmpty(phone) ||
+                InputValidator.isNullOrEmpty(city) || InputValidator.isNullOrEmpty(company)) {
+                JOptionPane.showMessageDialog(frame, "All fields are required. Please fill them out.", "Validation Error", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // 2. Validate formats
+            if (!InputValidator.isValidName(fName) || !InputValidator.isValidName(lName)) {
+                JOptionPane.showMessageDialog(frame, "Names must contain at least 2 characters and only letters.", "Validation Error", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            if (!InputValidator.isValidName(city)) {
+                JOptionPane.showMessageDialog(frame, "City name must contain only letters.", "Validation Error", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            if (!InputValidator.isValidEmail(email)) {
+                JOptionPane.showMessageDialog(frame, "Please enter a valid email address.", "Validation Error", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            if (!InputValidator.isValidPhone(phone)) {
+                JOptionPane.showMessageDialog(frame, "Phone number must be exactly 10 digits.", "Validation Error", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
             int currentShopId = UserSession.loggedInShopId;
 
             Supplier s = new Supplier(0, fName, lName, email, phone, city, 0, currentShopId, company);
@@ -92,7 +119,7 @@ public class SupplierUI {
                 phoneField.setText(""); cityField.setText(""); companyField.setText("");
                 refreshBtn.doClick(); 
             } else {
-                JOptionPane.showMessageDialog(frame, "Database Error!", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(frame, "Database Error! Email might already exist.", "Error", JOptionPane.ERROR_MESSAGE);
             }
         });
 

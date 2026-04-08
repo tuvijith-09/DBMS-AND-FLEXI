@@ -1,0 +1,18 @@
+# Compiled Java class files
+*.class
+
+# Compiled output directories
+bin/
+build/
+out/
+target/
+
+# IDE specific files (VS Code)
+.vscode/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+#use DBConnection.java.example and rename it to DBConnection.java and add your own database credentials
+src/db/DBConnection.java
