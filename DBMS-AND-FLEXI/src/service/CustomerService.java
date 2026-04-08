@@ -17,42 +17,78 @@ public class CustomerService implements CRUDOperations<Customer> {
         Connection con = null;
         try {
             con = DBConnection.getConnection();
+            // Start ACID transaction
             con.setAutoCommit(false);
 
-            String personSql = "INSERT INTO Person (FirstName, LastName, Email, PhoneNo, City) VALUES (?, ?, ?, ?, ?)";
-            try (PreparedStatement ps1 = con.prepareStatement(personSql, Statement.RETURN_GENERATED_KEYS)) {
-                ps1.setString(1, c.getFirstName());
-                ps1.setString(2, c.getLastName());
-                ps1.setString(3, c.getEmail());
-                ps1.setString(4, c.getPhoneNo());
-                ps1.setString(5, c.getCity());
-                ps1.executeUpdate();
+            int personId = -1;
 
-                ResultSet rs = ps1.getGeneratedKeys();
-                int personId = 0;
-                if (rs.next()) personId = rs.getInt(1);
-
-                String custSql = "INSERT INTO Customer (PersonID, ShopID, Status) VALUES (?, ?, ?)";
-                try (PreparedStatement ps2 = con.prepareStatement(custSql)) {
-                    ps2.setInt(1, personId);
-                    ps2.setInt(2, c.getShopId());
-                    ps2.setString(3, c.getStatus());
-                    ps2.executeUpdate();
+            // 1. Check if the human already exists in the global Person table using their Email
+            String checkPersonSql = "SELECT PersonID FROM Person WHERE Email = ?";
+            try (PreparedStatement psCheck = con.prepareStatement(checkPersonSql)) {
+                psCheck.setString(1, c.getEmail());
+                try (ResultSet rs = psCheck.executeQuery()) {
+                    if (rs.next()) {
+                        personId = rs.getInt("PersonID");
+                    }
                 }
             }
+
+            // 2. If they don't exist in the system at all, create a new Person record
+            if (personId == -1) {
+                String personSql = "INSERT INTO Person (FirstName, LastName, Email, PhoneNo, City) VALUES (?, ?, ?, ?, ?)";
+                try (PreparedStatement ps1 = con.prepareStatement(personSql, Statement.RETURN_GENERATED_KEYS)) {
+                    ps1.setString(1, c.getFirstName());
+                    ps1.setString(2, c.getLastName());
+                    ps1.setString(3, c.getEmail());
+                    ps1.setString(4, c.getPhoneNo());
+                    ps1.setString(5, c.getCity());
+                    ps1.executeUpdate();
+
+                    try (ResultSet rsKeys = ps1.getGeneratedKeys()) {
+                        if (rsKeys.next()) personId = rsKeys.getInt(1);
+                    }
+                }
+            }
+
+            // 3. Prevent duplicate customer records inside the SAME warehouse
+            String checkCustomerSql = "SELECT 1 FROM Customer WHERE PersonID = ? AND ShopID = ?";
+            try (PreparedStatement psCheckCust = con.prepareStatement(checkCustomerSql)) {
+                psCheckCust.setInt(1, personId);
+                psCheckCust.setInt(2, c.getShopId());
+                try (ResultSet rs = psCheckCust.executeQuery()) {
+                    if (rs.next()) {
+                        // User is already a customer here! Rollback and abort.
+                        con.rollback();
+                        System.out.println("Customer already exists in this Warehouse.");
+                        return false; 
+                    }
+                }
+            }
+
+            // 4. Link the human to this specific Warehouse
+            String custSql = "INSERT INTO Customer (PersonID, ShopID, Status) VALUES (?, ?, ?)";
+            try (PreparedStatement ps2 = con.prepareStatement(custSql)) {
+                ps2.setInt(1, personId);
+                ps2.setInt(2, c.getShopId());
+                ps2.setString(3, c.getStatus());
+                ps2.executeUpdate();
+            }
+
+            // Everything succeeded, commit the transaction to the database!
             con.commit();
             return true;
+
         } catch (SQLException e) {
             try { if (con != null) con.rollback(); } catch (SQLException ex) {}
             System.out.println("Add Customer Error: " + e.getMessage());
             return false;
         } finally {
-            // CRITICAL FIX: Ensure the connection is actually closed, not just auto-commit reset!
+            // CRITICAL FIX: Ensure the connection is actually closed to prevent memory leaks!
             try { 
                 if (con != null) {
                     con.setAutoCommit(true);
-                    con.close(); 
-                }
+                    con.close();
+                } 
             } catch (SQLException ex) {
                 System.out.println("Connection Close Error: " + ex.getMessage());
             }
@@ -109,7 +145,7 @@ public class CustomerService implements CRUDOperations<Customer> {
         }
     }
 
-    // --- SECURE DATA FETCHING ---
+    // --- SECURE DATA FETCHING (Prevents UI Memory Leaks) ---
     public List<Object[]> getCustomerTableData(int shopId) {
         List<Object[]> rowData = new ArrayList<>();
         String query = "SELECT c.CustomerID, p.FirstName, p.LastName, s.ShopName, c.Status " +

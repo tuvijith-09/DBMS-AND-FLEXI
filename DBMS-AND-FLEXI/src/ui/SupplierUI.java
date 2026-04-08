@@ -3,7 +3,7 @@ package ui;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.sql.ResultSet;
+import java.util.List;
 import model.Supplier;
 import service.SupplierService;
 import util.InputValidator;
@@ -55,19 +55,13 @@ public class SupplierUI {
 
         SupplierService service = new SupplierService();
 
-        // Refresh Action
+        // Refresh Action (SECURED: Uses safe List instead of ResultSet)
         refreshBtn.addActionListener(e -> {
             try {
                 model.setRowCount(0); 
-                ResultSet rs = service.getAllSuppliers(UserSession.loggedInShopId); 
-                while (rs.next()) {
-                    model.addRow(new Object[]{
-                            rs.getInt("SupplierID"),
-                            rs.getString("FirstName"),
-                            rs.getString("LastName"),
-                            rs.getString("CompanyName"),
-                            rs.getString("City")
-                    });
+                List<Object[]> rows = service.getSupplierTableData(UserSession.loggedInShopId); 
+                for (Object[] row : rows) {
+                    model.addRow(row);
                 }
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(frame, "Table load error: " + ex.getMessage());
@@ -119,7 +113,7 @@ public class SupplierUI {
                 phoneField.setText(""); cityField.setText(""); companyField.setText("");
                 refreshBtn.doClick(); 
             } else {
-                JOptionPane.showMessageDialog(frame, "Database Error! Email might already exist.", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(frame, "Database Error! Ensure the connection is active.", "Error", JOptionPane.ERROR_MESSAGE);
             }
         });
 

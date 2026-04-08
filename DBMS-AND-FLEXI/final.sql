@@ -24,30 +24,36 @@ CREATE TABLE Shop (
     City VARCHAR(50)
 );
 
+-- INCLUDES PASSWORD UPDATE
 CREATE TABLE User (
     UserID INT AUTO_INCREMENT PRIMARY KEY,
     PersonID INT UNIQUE,
     ShopID INT,
+    Password VARCHAR(255) NOT NULL DEFAULT 'admin123',
     FOREIGN KEY (PersonID) REFERENCES Person(PersonID) ON DELETE CASCADE,
     FOREIGN KEY (ShopID) REFERENCES Shop(ShopID) ON DELETE CASCADE
 );
 
+-- MULTI-TENANT FIXED: Removed strict PersonID UNIQUE, added composite UNIQUE (PersonID, ShopID)
 CREATE TABLE Customer (
     CustomerID INT AUTO_INCREMENT PRIMARY KEY,
-    PersonID INT UNIQUE,
+    PersonID INT,
     ShopID INT,
     Status VARCHAR(50) DEFAULT 'Active',
     FOREIGN KEY (PersonID) REFERENCES Person(PersonID) ON DELETE CASCADE,
-    FOREIGN KEY (ShopID) REFERENCES Shop(ShopID) ON DELETE CASCADE
+    FOREIGN KEY (ShopID) REFERENCES Shop(ShopID) ON DELETE CASCADE,
+    UNIQUE (PersonID, ShopID)
 );
 
+-- MULTI-TENANT FIXED: Removed strict PersonID UNIQUE, added composite UNIQUE (PersonID, ShopID)
 CREATE TABLE Supplier (
     SupplierID INT AUTO_INCREMENT PRIMARY KEY,
-    PersonID INT UNIQUE,
+    PersonID INT,
     ShopID INT,
     CompanyName VARCHAR(100) NOT NULL,
     FOREIGN KEY (PersonID) REFERENCES Person(PersonID) ON DELETE CASCADE,
-    FOREIGN KEY (ShopID) REFERENCES Shop(ShopID) ON DELETE CASCADE
+    FOREIGN KEY (ShopID) REFERENCES Shop(ShopID) ON DELETE CASCADE,
+    UNIQUE (PersonID, ShopID)
 );
 
 CREATE TABLE Category (
@@ -108,9 +114,11 @@ VALUES
 ('Supplier1', 'Global', 'sup1@mail.com', '9005', 'Hyderabad'),
 ('Supplier2', 'Metro', 'sup2@mail.com', '9006', 'Mumbai');
 
--- Users
-INSERT INTO User (PersonID, ShopID)
-VALUES (1,1), (2,2);
+-- Users (Includes Passwords for Ravi and Amit)
+INSERT INTO User (PersonID, ShopID, Password)
+VALUES 
+(1, 1, 'ravi_password'), 
+(2, 2, 'amit_password');
 
 -- Customers
 INSERT INTO Customer (PersonID, ShopID, Status)
@@ -141,46 +149,3 @@ INSERT INTO InvoiceItem (InvoiceID, ProductID, Quantity, Subtotal)
 VALUES
 (1,1,1,45000),
 (2,3,1,500);
-
--- ========================
--- UPDATE
--- ========================
-UPDATE Product
-SET Quantity = Quantity - 1
-WHERE ProductID = 1;
-
--- ========================
--- DELETE
--- ========================
-DELETE FROM Customer
-WHERE CustomerID = 2;
-
--- ========================
--- SELECT QUERIES
--- ========================
-
--- 1. All Products
-SELECT * FROM Product;
-
--- 2. Customer Details
-SELECT c.CustomerID, p.FirstName, s.ShopName
-FROM Customer c
-JOIN Person p ON c.PersonID = p.PersonID
-JOIN Shop s ON c.ShopID = s.ShopID;
-
--- 3. Invoice Details
-SELECT i.InvoiceID, pr.Name, ii.Quantity, ii.Subtotal
-FROM Invoice i
-JOIN InvoiceItem ii ON i.InvoiceID = ii.InvoiceID
-JOIN Product pr ON ii.ProductID = pr.ProductID;
-
--- 4. Products per Shop
-SELECT s.ShopName, p.Name, p.Quantity
-FROM Product p
-JOIN Shop s ON p.ShopID = s.ShopID;
-
--- 5. Supplier Info
-SELECT sp.CompanyName, p.FirstName, s.ShopName
-FROM Supplier sp
-JOIN Person p ON sp.PersonID = p.PersonID
-JOIN Shop s ON sp.ShopID = s.ShopID;
