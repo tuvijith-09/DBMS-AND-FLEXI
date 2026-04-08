@@ -186,33 +186,22 @@ CREATE TABLE PurchaseOrderItem (
 );
 USE multi_tenant_inventory;
 
--- ==============================
--- 1️⃣ INSERT SHOPS
--- ==============================
 INSERT INTO Shop (ShopName, City, PostalCode)
 VALUES 
 ('Tech World', 'Hyderabad', '500001'),
 ('Fresh Mart', 'Mumbai', '400001');
 
--- ==============================
--- 2️⃣ INSERT PERSONS (Shop Owners)
--- ==============================
 INSERT INTO Person (FirstName, LastName, Email, PhoneNo, StreetNo, City, PostalCode)
 VALUES
 ('Ravi', 'Kumar', 'ravi@techworld.com', '9000000001', '12A', 'Hyderabad', '500001'),
 ('Amit', 'Sharma', 'amit@freshmart.com', '9000000002', '45B', 'Mumbai', '400001');
 
 -- ==============================
--- 3️⃣ INSERT USERS (Owners)
--- ==============================
 INSERT INTO User (PersonID, ShopID, IsVerified)
 VALUES
 (1, 1, TRUE),
 (2, 2, TRUE);
 
--- ==============================
--- 4️⃣ INSERT CUSTOMERS
--- ==============================
 INSERT INTO Person (FirstName, LastName, Email, PhoneNo, StreetNo, City, PostalCode)
 VALUES
 ('Sita', 'Reddy', 'sita@gmail.com', '9000000010', '22C', 'Hyderabad', '500002'),
@@ -223,9 +212,6 @@ VALUES
 (3, 1, 'Active'),
 (4, 2, 'Active');
 
--- ==============================
--- 5️⃣ INSERT SUPPLIERS
--- ==============================
 INSERT INTO Person (FirstName, LastName, Email, PhoneNo, StreetNo, City, PostalCode)
 VALUES
 ('Global', 'Suppliers', 'global@supplier.com', '9000000020', '10X', 'Hyderabad', '500003'),
@@ -236,17 +222,11 @@ VALUES
 (5, 1, 'GST12345', 'Global Suppliers Pvt Ltd'),
 (6, 2, 'GST67890', 'Metro Distributors Ltd');
 
--- ==============================
--- 6️⃣ INSERT CATEGORIES
--- ==============================
 INSERT INTO Category (ShopID, Name, Description)
 VALUES
 (1, 'Electronics', 'Electronic Items'),
 (2, 'Groceries', 'Daily Essentials');
 
--- ==============================
--- 7️⃣ INSERT PRODUCTS
--- ==============================
 INSERT INTO Product (ShopID, CategoryID, Name, CostPrice, SellingPrice, Quantity)
 VALUES
 (1, 1, 'Laptop', 40000, 45000, 10),
@@ -254,16 +234,10 @@ VALUES
 (2, 2, 'Rice 10kg', 400, 500, 50),
 (2, 2, 'Cooking Oil 1L', 120, 150, 100);
 
--- ==============================
--- 8️⃣ INSERT INVOICE (Shop 1)
--- ==============================
 INSERT INTO Invoice (ShopID, CustomerID, TotalAmount)
 VALUES
 (1, 1, 45000);
 
--- ==============================
--- 9️⃣ INSERT INVOICE ITEMS
--- ==============================
 INSERT INTO InvoiceItem (InvoiceID, ProductID, Quantity, UnitPrice, Subtotal)
 VALUES
 (1, 1, 1, 45000, 45000);
@@ -273,18 +247,12 @@ UPDATE Product
 SET Quantity = Quantity - 1
 WHERE ProductID = 1;
 
--- ==============================
--- 🔟 INSERT FINANCIAL TRANSACTION + PAYMENT
--- ==============================
 INSERT INTO FinancialTransaction (ShopID, Amount)
 VALUES (1, 45000);
 
 INSERT INTO Payment (FinancialTransactionID, PaymentMethod, ReferenceNo, Remarks)
 VALUES (1, 'UPI', 'UPI123456', 'Invoice Payment');
 
--- ==============================
--- 1️⃣1️⃣ INSERT PURCHASE ORDER (Shop 2)
--- ==============================
 INSERT INTO PurchaseOrder (ShopID, SupplierID, TotalAmount)
 VALUES (2, 2, 20000);
 

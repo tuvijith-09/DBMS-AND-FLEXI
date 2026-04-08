@@ -13,9 +13,9 @@ public class LoginUI {
     public static void main(String[] args) {
         // 1. Setup the Login Window
         JFrame frame = new JFrame("SaaS Inventory - Login");
-        frame.setSize(400, 300); // Increased height slightly to fit the new password field
+        frame.setSize(400, 350); // Increased height to comfortably fit all 6 rows
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setLayout(new GridLayout(5, 1, 10, 10)); // Increased rows to 5
+        frame.setLayout(new GridLayout(6, 1, 10, 10)); // 6 rows to accommodate the register button
         frame.setLocationRelativeTo(null); // Center on screen
 
         // 2. Create UI Components
@@ -30,18 +30,23 @@ public class LoginUI {
         emailPanel.add(emailLabel);
         emailPanel.add(emailField);
 
-        // NEW: Password Panel
+        // Password Panel
         JPanel passPanel = new JPanel();
         JLabel passLabel = new JLabel("Password:   "); // Extra spaces for visual alignment
-        // Pre-filled with Ravi's new password for easy testing
+        // Pre-filled with Ravi's password for easy testing
         JPasswordField passField = new JPasswordField("ravi_password", 15); 
         passPanel.add(passLabel);
         passPanel.add(passField);
 
-        // Button Panel
-        JPanel btnPanel = new JPanel();
+        // Login Button Panel
+        JPanel loginBtnPanel = new JPanel();
         JButton loginBtn = new JButton("Login");
-        btnPanel.add(loginBtn);
+        loginBtnPanel.add(loginBtn);
+
+        // Register Button Panel
+        JPanel registerBtnPanel = new JPanel();
+        JButton registerBtn = new JButton("Register New Warehouse");
+        registerBtnPanel.add(registerBtn);
 
         // 3. Login Button Action (Database Check)
         loginBtn.addActionListener(e -> {
@@ -95,11 +100,19 @@ public class LoginUI {
             }
         });
 
-        // 4. Add components to frame and display
+        // 4. Register Button Action (Routes to Registration Flow)
+        registerBtn.addActionListener(e -> {
+            frame.dispose(); // Close login window
+            RegisterUI.main(new String[0]); // Open registration window
+        });
+
+        // 5. Add components to frame and display
         frame.add(titleLabel);
         frame.add(emailPanel);
-        frame.add(passPanel); // Added the new password panel
-        frame.add(btnPanel);
+        frame.add(passPanel); 
+        frame.add(loginBtnPanel);
+        frame.add(registerBtnPanel);
+        
         frame.setVisible(true);
     }
 }
