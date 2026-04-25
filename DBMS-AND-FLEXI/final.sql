@@ -1,13 +1,7 @@
--- ========================
--- RESET DATABASE
--- ========================
+
 DROP DATABASE IF EXISTS multi_tenant_inventory;
 CREATE DATABASE multi_tenant_inventory;
 USE multi_tenant_inventory;
-
--- ========================
--- TABLE CREATION (DDL)
--- ========================
 
 CREATE TABLE Person (
     PersonID INT AUTO_INCREMENT PRIMARY KEY,
@@ -91,10 +85,6 @@ CREATE TABLE InvoiceItem (
     FOREIGN KEY (ProductID) REFERENCES Product(ProductID) ON DELETE CASCADE
 );
 
--- ========================
--- INSERT DATA (Expanded from Report)
--- ========================
-
 -- Shops
 INSERT INTO Shop (ShopName, City) VALUES 
 ('Tech World', 'Hyderabad'),
@@ -160,10 +150,6 @@ INSERT INTO Product (ShopID, CategoryID, Name, CostPrice, SellingPrice, Quantity
 (3, 5, 'Denim Jeans', 800, 1200, 150),
 (3, 6, 'Floral Dress', 1000, 1500, 80);
 
--- ========================
--- TRIGGERS
--- ========================
-
 DELIMITER //
 
 -- Trigger 1: Deduct Stock on Sale
@@ -193,10 +179,6 @@ END //
 
 DELIMITER ;
 
--- ========================
--- INSERT INVOICES (Triggers will auto-update stock and totals)
--- ========================
-
 -- Create the empty invoice headers first
 INSERT INTO Invoice (ShopID, CustomerID, TotalAmount) VALUES 
 (1, 1, 0), (2, 2, 0), (1, 3, 0),
@@ -209,11 +191,7 @@ INSERT INTO InvoiceItem (InvoiceID, ProductID, Quantity, Subtotal) VALUES
 (5, 9, 3, 1500.00), (5, 10, 1, 1200.00), (6, 6, 1, 4000.00),
 (7, 8, 2, 500.00), (7, 4, 1, 150.00);
 
-
--- ========================
 -- FUNCTIONS
--- ========================
-
 DELIMITER //
 
 -- Function 1: Get Total Revenue per Shop
@@ -242,10 +220,7 @@ END //
 
 DELIMITER ;
 
--- ========================
 -- STORED PROCEDURES
--- ========================
-
 DELIMITER //
 
 -- Procedure 1: Get Shop Inventory
@@ -278,11 +253,7 @@ END //
 
 DELIMITER ;
 
--- ========================
--- PROJECT QUERIES (Highlight and execute individually to test)
--- ========================
-
-/*
+-- PROJECT QUERIES
 -- Query 1: List all products with their category and shop name
 SELECT s.ShopName, c.Name AS Category, p.Name AS Product, p.CostPrice, p.SellingPrice, p.Quantity
 FROM Product p
@@ -323,4 +294,3 @@ JOIN Category c ON c.CategoryID = p.CategoryID
 JOIN Shop s ON s.ShopID = p.ShopID
 WHERE p.Quantity <= 15
 ORDER BY p.Quantity ASC;
-*/
