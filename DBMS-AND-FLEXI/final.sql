@@ -1,4 +1,3 @@
-
 DROP DATABASE IF EXISTS multi_tenant_inventory;
 CREATE DATABASE multi_tenant_inventory;
 USE multi_tenant_inventory;
@@ -162,6 +161,13 @@ BEGIN
     WHERE ProductID = NEW.ProductID;
 END //
 
+-- Test: Insert a sale of 1 Laptop (ProductID = 1)
+INSERT INTO InvoiceItem (InvoiceID, ProductID, Quantity, Subtotal)
+VALUES (1, 1, 1, 45000);
+
+-- Verify stock reduction:
+SELECT ProductID, Name, Quantity FROM Product WHERE ProductID = 1;
+
 -- Trigger 2: Sync Invoice TotalAmount
 CREATE TRIGGER after_invoiceitem_sync_total
 AFTER INSERT ON InvoiceItem
@@ -178,6 +184,8 @@ BEGIN
 END //
 
 DELIMITER ;
+-- Verify updated invoice total after item insertion:
+SELECT InvoiceID, TotalAmount FROM Invoice WHERE InvoiceID = 3;
 
 -- Create the empty invoice headers first
 INSERT INTO Invoice (ShopID, CustomerID, TotalAmount) VALUES 
@@ -205,6 +213,9 @@ BEGIN
     WHERE ShopID = in_shopid;
     RETURN total_rev;
 END //
+-- test cases
+SELECT ShopName, getTotalRevenue(ShopID) AS Revenue
+FROM Shop;
 
 -- Function 2: Get Total Stock Value per Shop
 CREATE FUNCTION getStockValue(in_shopid INT) 
@@ -219,6 +230,9 @@ BEGIN
 END //
 
 DELIMITER ;
+-- test cases
+SELECT ShopName, getStockValue(ShopID) AS StockValue
+FROM Shop;
 
 -- STORED PROCEDURES
 DELIMITER //
@@ -233,6 +247,8 @@ BEGIN
     WHERE s.ShopName = in_shopname
     ORDER BY c.Name, p.Name;
 END //
+-- test cases
+CALL getShopInventory('Tech World');
 
 -- Procedure 2: Secure Password Update
 CREATE PROCEDURE changeUserPassword(IN in_email VARCHAR(100), IN in_newpassword VARCHAR(255))
@@ -252,6 +268,9 @@ BEGIN
 END //
 
 DELIMITER ;
+
+-- test cases
+CALL changeUserPassword('ravi@mail.com', 'NewSecureP@ss123');
 
 -- PROJECT QUERIES
 -- Query 1: List all products with their category and shop name
